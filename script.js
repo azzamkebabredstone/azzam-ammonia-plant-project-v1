@@ -638,26 +638,40 @@ function updateBreakdownDetails(categoryTotals, totalDailyCost) {
 }
 
 // Update analisis ekonomi
-function updateEconomicAnalysis(dailyRawMaterialCost, yearlyRawMaterialCost) {
-    // 1. Hitung total biaya peralatan (E) dari semua mesin yang dipilih
-    const E = calculateTotalMachineCost(); // sudah ada fungsi ini
+function updateEconomicAnalysis() {
+    // 1. Dapatkan total biaya peralatan (E)
+    const E = calculateTotalMachineCost();
 
-    // 2. Hitung investasi berdasarkan E
+    // 2. Hitung investasi
     const investment = calculateInvestment(E);
     const FCI = investment.FCI;
     const TCI = investment.TCI;
     const WC = investment.WC;
 
-    // 3. Hitung biaya produksi tahunan
-    // Variable Cost (VC) = bahan baku + utilities + packaging
-    // Kita punya yearlyRawMaterialCost, tapi di PDF utilities & packaging dihitung terpisah.
-    // Untuk sederhana, kita gunakan: VC = yearlyRawMaterialCost + utilities + packaging
-    const utilitiesCost = 80000000000;   // Rp 80 M (dari PDF contoh)
-    const packagingCost = 16000000000;   // Rp 16 M
+    // 3. Hitung biaya bahan baku tahunan (dari tabel yang sudah diupdate)
+    let yearlyRawMaterialCost = 0;
+    const rows = document.querySelectorAll('#raw-material-body tr');
+    rows.forEach(row => {
+        const cell = row.cells[7]; // kolom Biaya Tahunan (index 7)
+        if (cell) {
+            const text = cell.textContent;
+            const angka = parseFloat(text.replace(/[^0-9]/g, ''));
+            yearlyRawMaterialCost += angka;
+        }
+    });
+
+    // Fallback jika gagal parse
+    if (yearlyRawMaterialCost === 0) {
+        // Ambil dari data asumsi
+        const totalDaily = parseFloat(document.getElementById('daily-total-cost')?.textContent.replace(/[^0-9]/g, '')) || 3217450000;
+        yearlyRawMaterialCost = totalDaily * 330;
+    }
+
+    // 4. Biaya lainnya (tetap)
+    const utilitiesCost = 80000000000;
+    const packagingCost = 16000000000;
     const VC = yearlyRawMaterialCost + utilitiesCost + packagingCost;
 
-    // Fixed Cost (FC) = maintenance, labor, lab, overhead, insurance, depreciation
-    // maintenance 5% FCI, labor 32M, lab 10% labor, overhead 50% labor, insurance 2% FCI, depreciation 10% E
     const maintenance = 0.05 * FCI;
     const labor = 32000000000;
     const lab = 0.1 * labor;
@@ -667,25 +681,18 @@ function updateEconomicAnalysis(dailyRawMaterialCost, yearlyRawMaterialCost) {
     const FC = maintenance + labor + lab + overhead + insurance + depreciation;
 
     const annualProductionCost = VC + FC;
-
-    // 4. Pendapatan (tetap)
-    const annualRevenue = 330000 * 5600000; // 330.000 ton × Rp 5.600.000 = Rp 1.848.000.000.000
-
-    // 5. Laba
+    const annualRevenue = 330000 * 5600000;
     const annualGrossProfit = annualRevenue - annualProductionCost;
     const tax = annualGrossProfit * 0.25;
     const netProfit = annualGrossProfit - tax;
 
-    // 6. Payback Period
     const paybackPeriod = FCI / (netProfit + depreciation);
-
-    // 7. Break Even Point (dalam ton)
     const sellingPrice = 5600000;
     const variableCostPerTon = VC / 330000;
     const BEP_ton = FC / (sellingPrice - variableCostPerTon);
     const BEP_percent = (BEP_ton / 330000) * 100;
 
-    // 8. Update tampilan HTML
+    // Update HTML
     document.getElementById('fci-value').textContent = formatRupiah(FCI);
     document.getElementById('wc-value').textContent = formatRupiah(WC);
     document.getElementById('tci-value').textContent = formatRupiah(TCI);
@@ -693,10 +700,6 @@ function updateEconomicAnalysis(dailyRawMaterialCost, yearlyRawMaterialCost) {
     document.getElementById('annual-gross-profit').textContent = formatRupiah(annualGrossProfit);
     document.getElementById('payback-period').textContent = `${paybackPeriod.toFixed(2)} Tahun`;
     document.getElementById('bep-value').innerHTML = `${BEP_percent.toFixed(1)}% Kapasitas<br><small>${formatNumber(BEP_ton, 0)} ton/tahun</small>`;
-
-    // Simpan juga ke variabel global jika diperlukan
-    window.currentFCI = FCI;
-    window.currentTCI = TCI;
 }
 
 // Update tabel peralatan
@@ -748,6 +751,7 @@ function updateEquipmentTable(totalMachineCost) {
 function updateAllCalculations() {
     updateMachineSummary();
     updateRawMaterialCalculation();
+    updateEconomicAnalysis();
 }
 
 // ===== SCROLL SPY NAVIGATION =====
