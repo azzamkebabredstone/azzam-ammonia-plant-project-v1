@@ -186,7 +186,7 @@ const rawMaterialData = [
         name: "Listrik Industri",
         category: "utility",
         unit: "kWh",
-        theoreticalNeed: 137000, // Total dari semua proses
+        theoreticalNeed: 1000000, // 1 juta kWh/hari
         unitPrice: 1500,
         source: "PLN Tarif Industri 2024"
     },
@@ -273,12 +273,12 @@ const equipmentData = [
 
 // Format angka ke Rupiah
 function formatRupiah(amount) {
-    if (amount >= 1000000000000) {
-        return `Rp ${(amount / 1000000000000).toFixed(2)} T`;
-    } else if (amount >= 1000000000) {
-        return `Rp ${(amount / 1000000000).toFixed(2)} M`;
-    } else if (amount >= 1000000) {
-        return `Rp ${(amount / 1000000).toFixed(1)} jt`;
+    if (amount >= 1e12) {
+        return `Rp ${(amount / 1e12).toFixed(2)} T`;
+    } else if (amount >= 1e9) {
+        return `Rp ${(amount / 1e9).toFixed(2)} M`;
+    } else if (amount >= 1e6) {
+        return `Rp ${(amount / 1e6).toFixed(1)} jt`;
     } else {
         return `Rp ${amount.toLocaleString('id-ID')}`;
     }
