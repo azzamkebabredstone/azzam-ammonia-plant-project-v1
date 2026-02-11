@@ -576,38 +576,65 @@ function updateBreakdownDetails(categoryTotals, totalDailyCost) {
         { id: 'chemical', name: 'Bahan Kimia', color: '#f59e0b' },
         { id: 'catalyst', name: 'Katalis', color: '#8b5cf6' }
     ];
-    
-    let detailHtml = '';
-    let totalPercentage = 0;
-    
+
+    // 1. Hitung persentase dan siapkan string conic-gradient
+    let gradientString = '';
+    let cumulativePercentage = 0;
+    const percentages = [];
+
     categories.forEach((cat, index) => {
         const cost = categoryTotals[cat.id] || 0;
         const percentage = totalDailyCost > 0 ? (cost / totalDailyCost * 100) : 0;
-        totalPercentage += percentage;
-        
-        detailHtml += `
-            <div class="detail-item">
-                <div class="detail-name">${cat.name}</div>
-                <div class="detail-percentage">${percentage.toFixed(1)}%</div>
-                <div class="detail-cost">${formatRupiah(cost)}/hari</div>
-            </div>
-        `;
-        
-        // Update pie chart segment
-        const segment = document.querySelector(`.pie-segment:nth-child(${index + 1})`);
-        if (segment) {
-            segment.style.setProperty('--percentage', percentage);
-            segment.style.setProperty('--color', cat.color);
-        }
-        
-        // Update legend
-        const legendItem = document.querySelector(`.legend-item:nth-child(${index + 1}) .legend-label`);
-        if (legendItem) {
-            legendItem.textContent = `${cat.name} (${percentage.toFixed(1)}%)`;
-        }
+        percentages.push(percentage);
+
+        // Simpan persentase kumulatif
+        const start = cumulativePercentage;
+        cumulativePercentage += percentage;
+        gradientString += `${cat.color} ${start}% ${cumulativePercentage}%, `;
     });
-    
-    document.getElementById('material-detail-list').innerHTML = detailHtml;
+
+    // Hapus koma terakhir
+    gradientString = gradientString.slice(0, -2);
+
+    // 2. Terapkan ke elemen pie chart
+    const pieVisual = document.getElementById('pieChartVisual');
+    if (pieVisual) {
+        pieVisual.style.background = `conic-gradient(${gradientString})`;
+    }
+
+    // 3. Update legend
+    const legendContainer = document.querySelector('.pie-legend');
+    if (legendContainer) {
+        let legendHtml = '';
+        categories.forEach((cat, index) => {
+            const percentage = percentages[index];
+            legendHtml += `
+                <div class="legend-item">
+                    <span class="legend-color" style="background: ${cat.color};"></span>
+                    <span class="legend-label">${cat.name} (${percentage.toFixed(1)}%)</span>
+                </div>
+            `;
+        });
+        legendContainer.innerHTML = legendHtml;
+    }
+
+    // 4. Update detail list (sebelah kanan)
+    const detailList = document.getElementById('material-detail-list');
+    if (detailList) {
+        let detailHtml = '';
+        categories.forEach(cat => {
+            const cost = categoryTotals[cat.id] || 0;
+            const percentage = totalDailyCost > 0 ? (cost / totalDailyCost * 100) : 0;
+            detailHtml += `
+                <div class="detail-item">
+                    <div class="detail-name">${cat.name}</div>
+                    <div class="detail-percentage">${percentage.toFixed(1)}%</div>
+                    <div class="detail-cost">${formatRupiah(cost)}/hari</div>
+                </div>
+            `;
+        });
+        detailList.innerHTML = detailHtml;
+    }
 }
 
 // Update analisis ekonomi
