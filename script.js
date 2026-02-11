@@ -27,14 +27,40 @@ const machinesData = {
     }
 };
 
-// ✅ DATA BAHAN BAKU – HANYA YANG DIBELI (UTILITAS DIHAPUS)
+// ===== DATA BAHAN BAKU & UTILITAS (LENGKAP - REALISTIS) =====
 const rawMaterialData = [
-    { id: "natural_gas", name: "Gas Alam", category: "gas", unit: "MMBTU", theoreticalNeed: 30000, unitPrice: 96000, source: "ESDM 2024" },
-    { id: "zno", name: "Zinc Oxide (ZnO)", category: "chemical", unit: "kg", theoreticalNeed: 147.4, unitPrice: 85000, source: "Supplier" },
-    { id: "catalyst_nickel", name: "Katalis Nikel", category: "catalyst", unit: "kg", theoreticalNeed: 0.05, unitPrice: 1200000, source: "Antam" },
-    { id: "catalyst_iron", name: "Katalis Besi", category: "catalyst", unit: "kg", theoreticalNeed: 0.03, unitPrice: 800000, source: "Supplier" },
-    { id: "catalyst_shift", name: "Katalis Shift", category: "catalyst", unit: "kg", theoreticalNeed: 0.02, unitPrice: 600000, source: "Supplier" },
-    { id: "mea", name: "Monoethanolamine (MEA)", category: "chemical", unit: "kg", theoreticalNeed: 50, unitPrice: 30000, source: "Kimia" }
+    // --- BAHAN BAKU UTAMA ---
+    { id: "natural_gas", name: "Gas Alam (Feed + Fuel)", category: "gas", unit: "MMBTU", 
+      theoreticalNeed: 30000, unitPrice: 96000, source: "ESDM 2024" },
+    { id: "zno", name: "Zinc Oxide (ZnO)", category: "chemical", unit: "kg", 
+      theoreticalNeed: 147.4, unitPrice: 85000, source: "Supplier" },
+    { id: "mea", name: "Monoethanolamine (MEA)", category: "chemical", unit: "kg", 
+      theoreticalNeed: 50, unitPrice: 30000, source: "Kimia" },
+    
+    // --- KATALIS (MAKE-UP) ---
+    { id: "catalyst_nickel", name: "Katalis Nikel (Reforming)", category: "catalyst", unit: "kg", 
+      theoreticalNeed: 0.05, unitPrice: 1200000, source: "Antam" },
+    { id: "catalyst_iron", name: "Katalis Besi (Haber-Bosch)", category: "catalyst", unit: "kg", 
+      theoreticalNeed: 0.03, unitPrice: 800000, source: "Supplier" },
+    { id: "catalyst_shift", name: "Katalis Shift (Fe-Cr)", category: "catalyst", unit: "kg", 
+      theoreticalNeed: 0.02, unitPrice: 600000, source: "Supplier" },
+    
+    // ===== UTILITAS - DIKEMBALIKAN! =====
+    // --- LISTRIK (Berdasarkan referensi ITERA 2025: 123 MW ≈ 2.95 JUTA kWh/hari) ---
+    { id: "electricity", name: "Listrik Industri", category: "utility", unit: "kWh", 
+      theoreticalNeed: 2950000, unitPrice: 1500, source: "PLN (skala 1000 MTPD)" },
+    
+    // --- AIR (Berdasarkan UII 2022 & Unmul 2015) ---
+    { id: "process_water", name: "Air Demineralisasi (Boiler)", category: "utility", unit: "m³", 
+      theoreticalNeed: 2800, unitPrice: 8000, source: "Water Treatment" },
+    { id: "cooling_water", name: "Air Pendingin (Make-up)", category: "utility", unit: "m³", 
+      theoreticalNeed: 32000, unitPrice: 2000, source: "Cooling Tower" },
+    { id: "boiler_feed", name: "Air Boiler (Make-up)", category: "utility", unit: "m³", 
+      theoreticalNeed: 1200, unitPrice: 5000, source: "Demin Plant" },
+    
+    // --- UDARA INSTRUMEN ---
+    { id: "instrument_air", name: "Udara Instrument", category: "utility", unit: "Nm³", 
+      theoreticalNeed: 25000, unitPrice: 500, source: "Air Compressor" }
 ];
 
 // Data peralatan utama (E)
@@ -42,19 +68,21 @@ const equipmentData = [
     { code: "R-101", name: "Desulfurizer Vessel", qty: 1, unitPrice: 3800000000 },
     { code: "F-101", name: "Steam Reformer Furnace", qty: 1, unitPrice: 136000000000 },
     { code: "C-101", name: "Syngas Compressor", qty: 1, unitPrice: 51200000000 },
-    { code: "R-201", name: "Shift Reactor", qty: 1, unitPrice: 48000000000 },
+    { code: "R-201", name: "Shift Reactor (HT + LT)", qty: 2, unitPrice: 24000000000 },
     { code: "C-201", name: "CO₂ Removal Unit", qty: 1, unitPrice: 85000000000 },
     { code: "R-301", name: "Ammonia Synthesis Reactor", qty: 1, unitPrice: 72000000000 },
-    { code: "D-301", name: "Refrigeration Column", qty: 2, unitPrice: 16000000000 },
-    { code: "HE-101", name: "Heat Exchangers", qty: 10, unitPrice: 4000000000 },
-    { code: "P-101", name: "Pumps & Motors", qty: 15, unitPrice: 640000000 },
-    { code: "TK-101", name: "Storage Tanks", qty: 4, unitPrice: 8000000000 }
+    { code: "C-301", name: "Ammonia Compressor", qty: 1, unitPrice: 98000000000 },
+    { code: "D-301", name: "Refrigeration System", qty: 2, unitPrice: 24000000000 },
+    { code: "HE-101", name: "Heat Exchangers (Total)", qty: 12, unitPrice: 3500000000 },
+    { code: "P-101", name: "Pumps & Motors", qty: 20, unitPrice: 500000000 },
+    { code: "TK-101", name: "Storage Tanks (NH3)", qty: 2, unitPrice: 24000000000 },
+    { code: "TK-102", name: "Storage Tanks (Feed)", qty: 2, unitPrice: 8000000000 }
 ];
 
-// ===== KONSTANTA EKONOMI =====
-const SELLING_PRICE = 6500000;       // Rp 6.500.000/ton
-const UTILITIES_COST = 150000000000; // Rp 150 M/tahun
-const PACKAGING_COST = 16000000000;  // Rp 16 M/tahun
+// ===== KONSTANTA EKONOMI (HARGA PASAR REAL 2026) =====
+const SELLING_PRICE = 8500000;        // Rp 8.500.000/ton (berdasarkan CFR India/Far East)
+const UTILITIES_COST_FIXED = 0;       // Tidak dipakai lagi - utilitas sudah dihitung per unit
+const PACKAGING_COST = 16000000000;   // Rp 16 M/tahun (tetap)
 
 // ===== UTILITY FUNCTIONS =====
 function formatRupiah(amount) {
@@ -63,8 +91,12 @@ function formatRupiah(amount) {
     if (amount >= 1e6) return `Rp ${(amount / 1e6).toFixed(1)} jt`;
     return `Rp ${amount.toLocaleString('id-ID')}`;
 }
+
 function formatNumber(num, decimals = 0) {
-    return num.toLocaleString('id-ID', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    return num.toLocaleString('id-ID', { 
+        minimumFractionDigits: decimals, 
+        maximumFractionDigits: decimals 
+    });
 }
 
 // ===== PERHITUNGAN UTAMA =====
@@ -81,9 +113,12 @@ function calculateAverageEfficiency() {
     let total = 0, count = 0;
     for (let i = 1; i <= 5; i++) {
         const select = document.getElementById(`machine${i}`);
-        if (select) { total += machinesData[`machine${i}`][select.value].efficiency; count++; }
+        if (select) { 
+            total += machinesData[`machine${i}`][select.value].efficiency; 
+            count++; 
+        }
     }
-    return count > 0 ? total / count : 85.2;
+    return count > 0 ? total / count : 77.6; // default standard semua
 }
 
 function calculateInvestment(E) {
@@ -125,7 +160,11 @@ function updateMachine(processNumber) {
     const machine = machinesData[`machine${processNumber}`][select.value];
     if (!machine) return;
     
-    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const setText = (id, val) => { 
+        const el = document.getElementById(id); 
+        if (el) el.textContent = val; 
+    };
+    
     setText(`machine${processNumber}-name`, machine.name);
     setText(`machine${processNumber}-price`, formatRupiah(machine.price));
     setText(`machine${processNumber}-efficiency`, `${machine.efficiency}%`);
@@ -134,19 +173,24 @@ function updateMachine(processNumber) {
     switch(processNumber) {
         case 1: 
             const znNeed = (147.4 * (100 / machine.efficiency)).toFixed(1);
-            setText('machine1-znoneed', `${znNeed} kg/hari`); break;
+            setText('machine1-znoneed', `${znNeed} kg/hari`); 
+            break;
         case 2:
             const ch4Need = (470588 * (100 / machine.efficiency)).toFixed(0);
-            setText('machine2-ch4need', `${formatNumber(ch4Need)} kg/hari`); break;
+            setText('machine2-ch4need', `${formatNumber(ch4Need)} kg/hari`); 
+            break;
         case 3:
             const energy3 = (15000 * (100 / machine.efficiency)).toFixed(0);
-            setText('machine3-energy', `${formatNumber(energy3)} kWh/hari`); break;
+            setText('machine3-energy', `${formatNumber(energy3)} kWh/hari`); 
+            break;
         case 4:
             const energy4 = (25000 * (100 / machine.efficiency)).toFixed(0);
-            setText('machine4-energy', `${formatNumber(energy4)} kWh/hari`); break;
+            setText('machine4-energy', `${formatNumber(energy4)} kWh/hari`); 
+            break;
         case 5:
             const energy5 = (45000 * (100 / machine.efficiency)).toFixed(0);
-            setText('machine5-energy', `${formatNumber(energy5)} kWh/hari`); break;
+            setText('machine5-energy', `${formatNumber(energy5)} kWh/hari`); 
+            break;
     }
 }
 
@@ -156,7 +200,13 @@ function updateMachineSummary() {
     
     let html = '';
     let totalCost = 0, totalEfficiency = 0;
-    const processNames = {1: "Desulfurisasi", 2: "Steam Reforming", 3: "Shift Conversion", 4: "CO₂ Removal", 5: "Sintesis Amonia"};
+    const processNames = {
+        1: "Desulfurisasi", 
+        2: "Steam Reforming", 
+        3: "Shift Conversion", 
+        4: "CO₂ Removal", 
+        5: "Sintesis Amonia"
+    };
     
     for (let i = 1; i <= 5; i++) {
         const select = document.getElementById(`machine${i}`);
@@ -194,18 +244,25 @@ function updateMachineSummary() {
 
 function setMachine(processNumber, value) {
     const select = document.getElementById(`machine${processNumber}`);
-    if (select) { select.value = value; updateMachine(processNumber); }
+    if (select) { 
+        select.value = value; 
+        updateMachine(processNumber); 
+    }
 }
+
 function setAllMachines(level) {
     for (let i = 1; i <= 5; i++) {
         const select = document.getElementById(`machine${i}`);
-        if (select) { select.value = level; updateMachine(i); }
+        if (select) { 
+            select.value = level; 
+            updateMachine(i); 
+        }
     }
     updateAllCalculations();
 }
 
 // Variabel global biaya bahan baku
-let lastDailyCost = 2894125000; // theoretical standard
+let lastDailyCost = 0;
 let lastYearlyCost = 0;
 
 function updateRawMaterialCalculation() {
@@ -217,8 +274,13 @@ function updateRawMaterialCalculation() {
     document.getElementById('current-extra-percent').textContent = `${((correctionFactor-1)*100).toFixed(1)}%`;
     
     let totalDailyCost = 0;
-    const categoryTotals = { gas:0, chemical:0, catalyst:0 };
-    const categoryNames = { gas:'Gas Alam', chemical:'Bahan Kimia', catalyst:'Katalis' };
+    const categoryTotals = { gas:0, chemical:0, catalyst:0, utility:0 };
+    const categoryNames = { 
+        gas:'Gas Alam', 
+        chemical:'Bahan Kimia', 
+        catalyst:'Katalis',
+        utility:'Utilitas'
+    };
     
     let tableBody = '';
     rawMaterialData.forEach(m => {
@@ -254,11 +316,14 @@ function updateRawMaterialCalculation() {
 function updateBreakdownDetails(categoryTotals, totalDailyCost) {
     const categories = [
         { id:'gas', name:'Gas Alam', color:'#3b82f6' },
+        { id:'utility', name:'Utilitas', color:'#10b981' },
         { id:'chemical', name:'Bahan Kimia', color:'#f59e0b' },
         { id:'catalyst', name:'Katalis', color:'#8b5cf6' }
     ];
+    
     let gradient = '', cum = 0;
     const percentages = [];
+    
     categories.forEach(cat => {
         const cost = categoryTotals[cat.id] || 0;
         const pct = totalDailyCost > 0 ? (cost / totalDailyCost * 100) : 0;
@@ -266,21 +331,30 @@ function updateBreakdownDetails(categoryTotals, totalDailyCost) {
         gradient += `${cat.color} ${cum}% ${cum + pct}%, `;
         cum += pct;
     });
+    
     const pie = document.getElementById('pieChartVisual');
     if (pie) pie.style.background = `conic-gradient(${gradient.slice(0,-2)})`;
     
     const legend = document.querySelector('.pie-legend');
     if (legend) {
         legend.innerHTML = categories.map((c,i) => 
-            `<div class="legend-item"><span class="legend-color" style="background:${c.color};"></span><span class="legend-label">${c.name} (${percentages[i].toFixed(1)}%)</span></div>`
+            `<div class="legend-item">
+                <span class="legend-color" style="background:${c.color};"></span>
+                <span class="legend-label">${c.name} (${percentages[i].toFixed(1)}%)</span>
+            </div>`
         ).join('');
     }
+    
     const detailList = document.getElementById('material-detail-list');
     if (detailList) {
         detailList.innerHTML = categories.map(c => {
             const cost = categoryTotals[c.id] || 0;
             const pct = totalDailyCost > 0 ? (cost / totalDailyCost * 100) : 0;
-            return `<div class="detail-item"><div class="detail-name">${c.name}</div><div class="detail-percentage">${pct.toFixed(1)}%</div><div class="detail-cost">${formatRupiah(cost)}/hari</div></div>`;
+            return `<div class="detail-item">
+                <div class="detail-name">${c.name}</div>
+                <div class="detail-percentage">${pct.toFixed(1)}%</div>
+                <div class="detail-cost">${formatRupiah(cost)}/hari</div>
+            </div>`;
         }).join('');
     }
 }
@@ -289,9 +363,16 @@ function updateEconomicAnalysis() {
     const E = calculateTotalMachineCost();
     const inv = calculateInvestment(E);
     
+    // Biaya bahan baku & utilitas tahunan (dari tabel)
     const yearlyRawMaterial = lastDailyCost * 330;
-    const VC = yearlyRawMaterial + UTILITIES_COST + PACKAGING_COST;
     
+    // Biaya tetap lainnya
+    const packagingCost = PACKAGING_COST;
+    
+    // Variable Cost = Bahan Baku + Utilitas + Packaging
+    const VC = yearlyRawMaterial + packagingCost;
+    
+    // Fixed Cost
     const maintenance = 0.05 * inv.FCI;
     const labor = 32000000000;
     const lab = 0.1 * labor;
@@ -300,17 +381,22 @@ function updateEconomicAnalysis() {
     const depreciation = 0.10 * E;
     const FC = maintenance + labor + lab + overhead + insurance + depreciation;
     
+    // Revenue & Profit
     const annualRevenue = 330000 * SELLING_PRICE;
     const annualProductionCost = VC + FC;
     const annualGrossProfit = annualRevenue - annualProductionCost;
     const tax = annualGrossProfit * 0.25;
     const netProfit = annualGrossProfit - tax;
     
+    // Payback Period
     const paybackPeriod = inv.FCI / (netProfit + depreciation);
+    
+    // Break Even Point
     const variableCostPerTon = VC / 330000;
     const BEP_ton = FC / (SELLING_PRICE - variableCostPerTon);
     const BEP_percent = (BEP_ton / 330000) * 100;
     
+    // Update DOM
     document.getElementById('fci-value').textContent = formatRupiah(inv.FCI);
     document.getElementById('wc-value').textContent = formatRupiah(inv.WC);
     document.getElementById('tci-value').textContent = formatRupiah(inv.TCI);
@@ -327,9 +413,19 @@ function updateEquipmentTable() {
     equipmentData.forEach(eq => {
         const t = eq.unitPrice * eq.qty;
         total += t;
-        rows += `<tr><td>${eq.code}</td><td>${eq.name}</td><td>${eq.qty}</td><td>${formatRupiah(eq.unitPrice)}</td><td>${formatRupiah(t)}</td></tr>`;
+        rows += `<tr>
+            <td>${eq.code}</td>
+            <td>${eq.name}</td>
+            <td>${eq.qty}</td>
+            <td>${formatRupiah(eq.unitPrice)}</td>
+            <td>${formatRupiah(t)}</td>
+        </tr>`;
     });
-    rows += `<tr class="total-row"><td colspan="4"><strong>TOTAL PERALATAN UTAMA (E)</strong></td><td><strong>${formatRupiah(total)}</strong></td></tr>`;
+    rows += `<tr class="total-row">
+        <td colspan="4"><strong>TOTAL PERALATAN UTAMA (E)</strong></td>
+        <td><strong>${formatRupiah(total)}</strong></td>
+    </tr>`;
+    
     const tbl = document.getElementById('equipment-table');
     if (tbl) tbl.innerHTML = rows;
 }
@@ -366,6 +462,7 @@ function initScrollSpy() {
     
     sections.forEach(section => observer.observe(section));
     
+    // Klik smooth scroll
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -381,6 +478,7 @@ function initScrollSpy() {
         });
     });
     
+    // Set active awal
     setTimeout(() => {
         if (sections.length > 0) {
             const firstId = sections[0].getAttribute('id');
@@ -398,13 +496,24 @@ function initBackToTop() {
         btn.classList.toggle('show', window.scrollY > 300);
     });
 }
+
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ===== FILTER TABEL =====
+function filterMaterialTable() {
+    const filter = document.getElementById('material-filter').value;
+    document.querySelectorAll('#raw-material-body tr').forEach(row => {
+        row.style.display = (filter === 'all' || row.getAttribute('data-category') === filter) ? '' : 'none';
+    });
+}
+
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Amonia Plant - Final Fix (Ekonomi Positif)');
+    console.log('=== PABRIK AMONIA 1000 MTPD ===');
+    console.log('✅ Versi Final - Data Realistis (Air & Listrik DIKEMBALIKAN)');
+    console.log('✅ Harga Jual: Rp 8.500.000/ton (Pasar 2026)');
     
     // Set default semua mesin ke standard
     for (let i = 1; i <= 5; i++) {
@@ -422,8 +531,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Animasi scroll
     const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; } });
+        entries.forEach(e => { 
+            if (e.isIntersecting) { 
+                e.target.style.opacity = '1'; 
+                e.target.style.transform = 'translateY(0)'; 
+            } 
+        });
     }, observerOptions);
+    
     document.querySelectorAll('.process-section, .machine-summary-section, .raw-material-section, .economics-section').forEach(s => {
         s.style.opacity = '0';
         s.style.transform = 'translateY(20px)';
@@ -431,11 +546,6 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(s);
     });
     
-    // Filter tabel
-    window.filterMaterialTable = function() {
-        const filter = document.getElementById('material-filter').value;
-        document.querySelectorAll('#raw-material-body tr').forEach(row => {
-            row.style.display = (filter === 'all' || row.getAttribute('data-category') === filter) ? '' : 'none';
-        });
-    };
+    // Export filter function ke global
+    window.filterMaterialTable = filterMaterialTable;
 });
