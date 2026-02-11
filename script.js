@@ -150,7 +150,7 @@ const rawMaterialData = [
         name: "Gas Alam",
         category: "gas",
         unit: "MMBTU",
-        theoreticalNeed: 29700000, // 458.8 ton/hari ≈ 29.7 juta MMBTU
+        theoreticalNeed: 30000,   // ✅ 30.000 MMBTU/hari (30 MMBTU/ton × 1000 ton)
         unitPrice: 96000,
         source: "Kementerian ESDM RI - Harga Gas Industri 2024"
     },
@@ -525,7 +525,17 @@ function updateRawMaterialCalculation() {
             </tr>
         `;
     });
+    // Hitung subtotal per kategori (untuk ditampilkan di footer)
+    let subtotalDaily = 0;
+    let subtotalYearly = 0;
+    Object.keys(categoryTotals).forEach(cat => {
+        subtotalDaily += categoryTotals[cat];
+        subtotalYearly += categoryTotals[cat] * 330;
+    });
     
+    document.getElementById('subtotal-daily').innerHTML = formatRupiah(subtotalDaily);
+    document.getElementById('subtotal-yearly').innerHTML = formatRupiah(subtotalYearly);
+
     document.getElementById('raw-material-body').innerHTML = tableBody;
     
     // Update total
@@ -602,38 +612,64 @@ function updateBreakdownDetails(categoryTotals, totalDailyCost) {
 
 // Update analisis ekonomi
 function updateEconomicAnalysis(dailyRawMaterialCost, yearlyRawMaterialCost) {
-    const totalMachineCost = calculateTotalMachineCost();
-    const avgEfficiency = calculateAverageEfficiency();
-    
-    // Update tabel peralatan
-    updateEquipmentTable(totalMachineCost);
-    
-    // Hitung biaya produksi tahunan baru
-    const annualRawMaterialCost = yearlyRawMaterialCost;
-    const otherCosts = 450000000000; // Biaya tetap lainnya
-    const annualProductionCost = annualRawMaterialCost + otherCosts;
-    
-    // Hitung profitabilitas baru
-    const annualRevenue = 1848000000000; // Tetap
+    // 1. Hitung total biaya peralatan (E) dari semua mesin yang dipilih
+    const E = calculateTotalMachineCost(); // sudah ada fungsi ini
+
+    // 2. Hitung investasi berdasarkan E
+    const investment = calculateInvestment(E);
+    const FCI = investment.FCI;
+    const TCI = investment.TCI;
+    const WC = investment.WC;
+
+    // 3. Hitung biaya produksi tahunan
+    // Variable Cost (VC) = bahan baku + utilities + packaging
+    // Kita punya yearlyRawMaterialCost, tapi di PDF utilities & packaging dihitung terpisah.
+    // Untuk sederhana, kita gunakan: VC = yearlyRawMaterialCost + utilities + packaging
+    const utilitiesCost = 80000000000;   // Rp 80 M (dari PDF contoh)
+    const packagingCost = 16000000000;   // Rp 16 M
+    const VC = yearlyRawMaterialCost + utilitiesCost + packagingCost;
+
+    // Fixed Cost (FC) = maintenance, labor, lab, overhead, insurance, depreciation
+    // maintenance 5% FCI, labor 32M, lab 10% labor, overhead 50% labor, insurance 2% FCI, depreciation 10% E
+    const maintenance = 0.05 * FCI;
+    const labor = 32000000000;
+    const lab = 0.1 * labor;
+    const overhead = 0.5 * labor;
+    const insurance = 0.02 * FCI;
+    const depreciation = 0.10 * E;
+    const FC = maintenance + labor + lab + overhead + insurance + depreciation;
+
+    const annualProductionCost = VC + FC;
+
+    // 4. Pendapatan (tetap)
+    const annualRevenue = 330000 * 5600000; // 330.000 ton × Rp 5.600.000 = Rp 1.848.000.000.000
+
+    // 5. Laba
     const annualGrossProfit = annualRevenue - annualProductionCost;
     const tax = annualGrossProfit * 0.25;
     const netProfit = annualGrossProfit - tax;
-    
-    // Update nilai
+
+    // 6. Payback Period
+    const paybackPeriod = FCI / (netProfit + depreciation);
+
+    // 7. Break Even Point (dalam ton)
+    const sellingPrice = 5600000;
+    const variableCostPerTon = VC / 330000;
+    const BEP_ton = FC / (sellingPrice - variableCostPerTon);
+    const BEP_percent = (BEP_ton / 330000) * 100;
+
+    // 8. Update tampilan HTML
+    document.getElementById('fci-value').textContent = formatRupiah(FCI);
+    document.getElementById('wc-value').textContent = formatRupiah(WC);
+    document.getElementById('tci-value').textContent = formatRupiah(TCI);
     document.getElementById('annual-production-cost').textContent = formatRupiah(annualProductionCost);
     document.getElementById('annual-gross-profit').textContent = formatRupiah(annualGrossProfit);
-    
-    // Hitung Payback Period (disederhanakan)
-    const fci = 1622740000000; // Tetap
-    const depreciation = totalMachineCost * 0.1;
-    const paybackPeriod = fci / (netProfit + depreciation);
-    
     document.getElementById('payback-period').textContent = `${paybackPeriod.toFixed(2)} Tahun`;
-    
-    // Update BEP berdasarkan efisiensi
-    const bepPercentage = 44.3 * (100 / avgEfficiency);
-    const bepValue = Math.min(bepPercentage, 100).toFixed(1);
-    document.getElementById('bep-value').textContent = `${bepValue}% Kapasitas`;
+    document.getElementById('bep-value').innerHTML = `${BEP_percent.toFixed(1)}% Kapasitas<br><small>${formatNumber(BEP_ton, 0)} ton/tahun</small>`;
+
+    // Simpan juga ke variabel global jika diperlukan
+    window.currentFCI = FCI;
+    window.currentTCI = TCI;
 }
 
 // Update tabel peralatan
@@ -773,6 +809,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize semua mesin ke standard
     for (let i = 1; i <= 5; i++) {
         updateMachine(i);
+    }
+
+    function calculateInvestment(E) {
+        // Direct Cost percentages (fixed)
+        const dcPercent = {
+            installation: 0.40,
+            instrumentation: 0.25,
+            piping: 0.50,
+            electrical: 0.12,
+            buildings: 0.15,
+            land: 0.08,
+            utilities: 0.40
+        };
+    
+        // Indirect Cost percentages (of DC)
+        const icPercent = {
+            engineering: 0.32,
+            construction: 0.40,
+            legal: 0.05,
+            contractor: 0.18,
+            contingency: 0.40
+        };
+    
+        // Hitung Direct Cost
+        let DC = E; // termasuk E sendiri? Di PDF, DC = E + semua komponen lain
+        // Tabel di PDF: "Purchased Equipment (E) 100%", lalu komponen lain % dari E
+        // Jadi total DC = E × (1 + jumlah semua % komponen)
+        const sumDCPercent = dcPercent.installation + dcPercent.instrumentation + dcPercent.piping + 
+                             dcPercent.electrical + dcPercent.buildings + dcPercent.land + dcPercent.utilities;
+        DC = E * (1 + sumDCPercent); // karena E sudah 100%
+    
+        // Hitung Indirect Cost
+        let IC = DC * (icPercent.engineering + icPercent.construction + icPercent.legal + 
+                       icPercent.contractor + icPercent.contingency);
+    
+        // Fixed Capital Investment
+        let FCI = DC + IC;
+    
+        // Working Capital (15% dari TCI)
+        // Rumus: WC = 0.15 * TCI, dan TCI = FCI + WC → TCI = FCI / 0.85
+        let TCI = FCI / 0.85;
+        let WC = TCI - FCI;
+    
+        return { DC, IC, FCI, WC, TCI };
     }
     
     // Inisialisasi perhitungan
